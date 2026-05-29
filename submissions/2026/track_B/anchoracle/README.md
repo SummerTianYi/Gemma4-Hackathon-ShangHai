@@ -97,13 +97,16 @@ Gemma 4 26B A4B 以该人物口吻流式讲述景点历史
 ```bash
 git clone https://github.com/SummerTianYi/travel-history-agent.git
 cd travel-history-agent
-cp .env.example .env.local
-# 编辑 .env.local，填入你的 Google AI Studio API Key
-npm install
-npm run dev
+
+# macOS / Linux
+bash setup.sh
+
+# Windows PowerShell
+# powershell -ExecutionPolicy Bypass -File setup.ps1
 ```
 
-启动成功后，在浏览器打开本机地址 `http://localhost:3000` 即可访问。
+脚本会自动完成：从模板生成 `.env.local` → 提示你填入 `GOOGLE_API_KEY` → 安装依赖 → 启动开发服务器。
+首次运行会停下来让你填 key，填好后再跑一次脚本即可。启动成功后，在浏览器打开本机地址 `http://localhost:3000` 即可访问。
 
 > 注：`http://localhost:3000` 是**本地开发地址**，仅在你本机执行 `npm run dev` 之后有效，**点开它不会跳到任何线上页面**。想直接体验无需安装，请使用线上 demo：<https://travel-history-agent.vercel.app>。
 
