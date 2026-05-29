@@ -52,14 +52,16 @@ Gemma 4 26B A4B 以该人物口吻流式讲述景点历史
 
 ---
 
-## 🎯 为什么用 Gemma 4
+## 🎯 模型选型：按任务匹配不同的 Gemma 4
 
-| 模型 | 用途 | 选型理由 |
-|------|------|----------|
-| **Gemma 4 31B IT (Dense)** | 视觉感知主路径 | 256K 长上下文 + 多模态原生支持，能在一次推理中并行完成 OCR / 场景分类 / 人物识别四个任务，省去多次调用 |
-| **Gemma 4 26B A4B IT (MoE)** | 历史人物对话 | 每次只激活 4B 参数 → 流式生成延迟极低，适合 30 位人物的高并发角色扮演 |
+同属 Gemma 4 家族，但视觉与对话两条链路对模型的诉求完全不同，我们为各自选用了最合适的变体：
 
-详细模型选型推理见 [TECHNICAL_REPORT.md](./TECHNICAL_REPORT.md)。
+| 任务环节 | 选用变体 | 为什么是它（而非另一个） |
+|----------|----------|--------------------------|
+| 视觉识别（OCR + 场景分类 + 主体识别 + 人物识别） | **Gemma 4 31B IT（Dense）** | Dense 架构精度更高，配合 256K 长上下文与原生多模态，可在**单次推理**里并行产出四项结构化结果，省去多轮调用与中间解析 |
+| 历史人物角色扮演对话 | **Gemma 4 26B A4B IT（MoE）** | MoE 每次仅激活 4B 参数，**流式首字延迟低、吞吐高**，更契合 30 位人物长文本、高并发的实时对话 |
+
+> 一句话：**重精度的视觉用 Dense，重响应速度的对话用 MoE**——同一家族内做按需取舍。详细推理见 [TECHNICAL_REPORT.md](./TECHNICAL_REPORT.md)。
 
 ---
 
@@ -97,7 +99,9 @@ npm install
 npm run dev
 ```
 
-打开 <http://localhost:3000>。
+启动成功后，在浏览器打开本机地址 `http://localhost:3000` 即可访问。
+
+> 注：`http://localhost:3000` 是**本地开发地址**，仅在你本机执行 `npm run dev` 之后有效，**点开它不会跳到任何线上页面**。想直接体验无需安装，请使用线上 demo：<https://travel-history-agent.vercel.app>。
 
 ### 方式 B：Docker
 
@@ -113,13 +117,13 @@ docker run -p 3000:3000 --env-file .env.local anchoracle
 
 ## 🔑 环境变量
 
+本地运行只需配置一个变量：
+
 | 变量 | 必填 | 说明 |
 |------|------|------|
-| `GOOGLE_API_KEY` | ✅ | Google AI Studio API Key，在 [aistudio.google.com](https://aistudio.google.com/apikey) 申请 |
-| `HTTPS_PROXY` | 仅本地开发 | 国内开发时如需代理，可设置（生产环境不需要） |
-| `DEBUG_API` | ❌ | 设为 `true` 时 `/api/scan` 会返回 `_debug` 内部数据（仅调试） |
+| `GOOGLE_API_KEY` | ✅ | Google AI Studio API Key，[点此申请](https://aistudio.google.com/apikey) |
 
-> 单 key 模式：项目仅读取 `GOOGLE_API_KEY`，不轮换备用 key。Free tier 配额耗尽请直接升级 Tier 1。
+> 中国大陆网络下，本地运行如需代理可额外设置 `HTTPS_PROXY`（详见下方「评测须知」第 1 条）。Free tier 配额耗尽时，换用更高 Tier 的 key 即可。
 
 ### 🔑 更换 API Key（评委必看）
 
