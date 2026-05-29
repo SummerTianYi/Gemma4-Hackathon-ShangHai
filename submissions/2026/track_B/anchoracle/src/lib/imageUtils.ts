@@ -6,14 +6,11 @@ const MIN_BASE64_LEN = 8000;
 const EXIF_PARSE_BYTES = 65536;
 
 /**
- * P0 修复：读取 JPEG EXIF Orientation tag (0x0112)。
- * 返回 1-8 的方向值；不是 JPEG / 没有 EXIF / 解析失败时返回 1（默认无旋转）。
+ * 读取 JPEG 的 EXIF Orientation (0x0112)，返回 1-8；非 JPEG / 无 EXIF / 解析失败时返回 1（无旋转）。
  *
- * 为什么需要：iOS Safari 拍的照片像素是横向的，但 EXIF 标 orientation=6（顺时针旋转 90° 显示）。
- * 浏览器 createImageBitmap 在不同实现下处理 EXIF 不一致，<img> 元素的 drawImage 完全不读 EXIF。
- * 这导致同一张图在不同浏览器/路径下被压缩成旋转 90° 的样子，AI 看到歪掉的建筑识别失败。
- *
- * 解决：主动读 EXIF orientation → 显式禁用浏览器自动旋转 → canvas 端统一手动应用旋转。
+ * iOS Safari 常以横向像素 + orientation=6 存储照片，而各浏览器对 EXIF 的处理并不一致
+ * （createImageBitmap 行为不一，<img> 的 drawImage 完全不读 EXIF），可能使同一张图被旋转
+ * 90° 后再压缩、影响识别。因此这里主动解析 orientation，并在 canvas 端统一应用旋转。
  */
 async function readJpegOrientation(file: File): Promise<number> {
   // 只对 JPEG 解 EXIF；PNG/WebP 没有 orientation 概念
@@ -153,11 +150,9 @@ function drawToJpegBase64(
 /**
  * 压缩图片并返回 base64 + mimeType。
  *
- * P0 修复策略：
- *   - 主动读 EXIF orientation
- *   - 路径 A 用 createImageBitmap + imageOrientation:"none" 显式禁用浏览器旋转，统一在 canvas 手动应用
- *   - 路径 B 用 <img> 兜底，drawImage 不读 EXIF，所以同样手动应用
- *   - 移除了原"路径 B = createImageBitmap 无选项"中间路径，因为不同浏览器默认行为不一致（可能 double-rotate）
+ * 方向处理：先读 EXIF orientation；路径 A 用 createImageBitmap + imageOrientation:"none"
+ * 显式禁用浏览器自动旋转，统一在 canvas 手动应用；路径 B 用 <img> 兜底，drawImage 不读
+ * EXIF，同样手动应用，确保各浏览器结果一致。
  *
  * 失败时 throw Error，调用方需自行处理。
  */

@@ -430,9 +430,7 @@ export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
-    // SEC-003: validate request shape before destructuring. Previously a
-    // malformed body (non-JSON, wrong types) propagated to downstream code
-    // and crashed with cryptic 500s + stack leakage.
+    // 解构前校验请求结构，避免畸形请求体（非 JSON / 错误类型）传入下游
     const body: unknown = await request.json().catch(() => null);
     if (!body || typeof body !== "object") {
       return Response.json({ error: "请求体格式错误" }, { status: 400 });
@@ -598,7 +596,7 @@ export async function POST(request: Request) {
       ? { type: queryIntent, landmark: primaryLandmark, city: cityName }
       : null;
 
-    // searchContext 不再放入 system prompt，而是附加到最后一条用户消息末尾
+    // searchContext 附加在最后一条用户消息末尾，而非 system prompt
     // 模型对临近用户输入的注意力远高于长 system prompt 中段，能显著提升搜索数据引用率
     // 字数限制同时放在顶部（高注意力）和角色设定后（语境强化），双重提示
     const systemPrompt =

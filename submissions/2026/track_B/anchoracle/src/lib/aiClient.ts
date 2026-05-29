@@ -7,8 +7,7 @@ if (process.env.NODE_ENV === "development") {
   });
 }
 
-// 单 key 模式：仅使用 GOOGLE_API_KEY（Google AI Studio）。
-// 之前的多 key 轮换（GOOGLE_API_KEY_2/3/4）已移除。
+// 从环境变量读取 Google AI Studio API Key
 const API_KEY = process.env.GOOGLE_API_KEY!;
 
 const aiInstance = new GoogleGenAI({ apiKey: API_KEY });
@@ -19,7 +18,7 @@ export function getAI(): GoogleGenAI {
 
 export function isQuotaError(err: unknown): boolean {
   const s = String(err);
-  // BUG-001: 不要把 INVALID_ARGUMENT 当成配额错误。
+  // INVALID_ARGUMENT 不属于配额错误，需排除
   return (
     s.includes("429") ||
     s.includes("RESOURCE_EXHAUSTED") ||
@@ -29,12 +28,11 @@ export function isQuotaError(err: unknown): boolean {
   );
 }
 
-// 单 key 模式下永远不切换；保留接口以避免调用方代码改动。
+// 当前部署仅配置单 key，无可切换的备用 key
 export function switchKey(): boolean {
   return false;
 }
 
-// 单 key 模式无需备用 key 提示。
 export function consumeKeyWarning(): string | null {
   return null;
 }

@@ -297,7 +297,7 @@ export default function ChatPage({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) {
-      // P2: alert 可能被移动浏览器拦截，改用 inline 提示
+      // 移动浏览器可能拦截 alert，改用 inline 提示
       setVoiceError("当前浏览器不支持语音输入。建议使用 Chrome 或 Safari。");
       setTimeout(() => setVoiceError(""), 4500);
       return;
@@ -308,7 +308,7 @@ export default function ChatPage({
     rec.interimResults = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (e: any) => setInput(e.results[0][0].transcript);
-    // P2: 之前 onerror 只 setIsListening(false)，权限拒绝/无信号等错误用户完全无感知
+    // onerror 需向用户区分权限拒绝 / 无信号等错误，而非静默处理
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onerror = (e: any) => {
       setIsListening(false);
@@ -332,7 +332,7 @@ export default function ChatPage({
       rec.start();
       setIsListening(true);
     } catch (err) {
-      // P2: rec.start() 可在已 listening 状态时抛 InvalidStateError
+      // rec.start() 在已 listening 状态下可能抛 InvalidStateError
       setVoiceError(`无法启动语音识别：${err instanceof Error ? err.message : String(err)}`);
       setTimeout(() => setVoiceError(""), 4500);
     }
@@ -423,13 +423,9 @@ export default function ChatPage({
               });
             }
           } catch (parseErr) {
-            // SF-002: previously this was a silent `catch {}`. Individual
-            // malformed chunks are tolerable (and rare in practice), but if
-            // EVERY chunk fails to parse (server bug, proxy injecting HTML,
-            // gateway timeout returning text/html instead of SSE) the user
-            // would see only the fallback "抱歉，我暂时无法回答" with no
-            // diagnostic. Log at least one example so it surfaces in
-            // browser devtools.
+            // 单个分片解析失败可容忍（实际罕见）；但若每个分片都失败（服务端 bug、
+            // 代理注入 HTML、网关超时返回 text/html 而非 SSE），用户只会看到兜底
+            // 文案而无从诊断。这里至少记录一个样例，便于在浏览器 devtools 中定位。
             malformedChunks++;
             if (malformedChunks <= 3) {
               console.warn("[chat] malformed SSE chunk:", line.slice(0, 200), parseErr);

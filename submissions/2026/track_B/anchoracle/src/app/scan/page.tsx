@@ -222,7 +222,7 @@ export default function ScanPage() {
                   </span>
                 </label>
 
-                {/* P1: sr-only (not "hidden"=display:none) — display:none blocks programmatic .click() on iOS Safari and some Android browsers */}
+                {/* 用 sr-only 而非 display:none：display:none 会阻止 iOS Safari 等浏览器对隐藏 input 的程序化 .click() */}
                 <input ref={fileInputRef} type="file" accept="image/*" className="sr-only" onChange={handleImage} />
                 <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="sr-only" onChange={handleImage} />
 

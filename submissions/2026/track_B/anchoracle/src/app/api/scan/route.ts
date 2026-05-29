@@ -3,9 +3,7 @@ import { landmarkData } from "@/data/landmarks";
 import { personas, GLOBAL_CONSTRAINTS } from "@/data/personas";
 import { getAI, isQuotaError, switchKey, consumeKeyWarning } from "@/lib/aiClient";
 
-// SEC-002: default OFF — only enable when explicitly opted-in via DEBUG_API=true.
-// Previously defaulted to ON, leaking internal _debug payload (prompts, model
-// internals) to clients on any deployment that didn't explicitly set DEBUG_API=false.
+// 调试开关：默认关闭，仅在显式设置 DEBUG_API=true 时返回内部 _debug 数据
 const DEBUG_API = process.env.DEBUG_API === "true";
 
 export const maxDuration = 60;
@@ -508,7 +506,7 @@ type VisionDescription = {
   // 解决"无城市 + 人物雕像"场景下，仅靠视觉特征无法分辨"哪个纪念馆/公园"的根本问题。
   // 一旦 Gemma 能正确识别雕像人物（如鲁迅），后端反查 character 锁定 3 个候选景点。
   person_in_statue: string;
-  // 保留旧字段（向后兼容 visionToText / debug）
+  // 供 visionToText / debug 使用的辅助字段
   building_style: string;
   surroundings: string;
 };
@@ -643,8 +641,8 @@ async function describeImageWithGemma(
     ? `提示：这张照片拍摄于中国${selectedCity.name}。`
     : "";
 
-  // 关键改进：
-  // 1) 不再硬塞「一定是以下景点之一」，避免 LLM prefix bias；改为"可能是其中之一"
+  // prompt 设计要点：
+  // 1) 用「可能是以下景点之一」的措辞，避免 LLM 的 prefix bias
   // 2) 强约束 scene_type / subject_type 必须从给定枚举里选
   // 3) 显式提示「故居 vs 公园」要看场景而不是看人名
   // 4) 新增 person_in_statue：30 选 1 闭卷题，破解"无城市 + 雕像"识别瓶颈
@@ -834,7 +832,7 @@ function scoreCandidate(landmark: Landmark, vision: VisionDescription): number {
 
   // === 中等信号 ===
   if (vision.possible_name && vision.possible_name.includes(landmark.name)) {
-    score += 3; // 降权：AI 猜测可能有 prefix bias，不再决定性
+    score += 3; // AI 猜测仅作弱信号（可能有 prefix bias）
   }
   for (const f of vision.notable_features) {
     if (f && (f.includes(landmark.name) || landmark.name.includes(f))) {
@@ -921,8 +919,7 @@ function buildSuggestions(city: CityOption | null): Array<{ landmark: string; ch
 
 export async function POST(request: Request) {
   try {
-    // SEC-003: validate request shape before use. Previously non-JSON or
-    // wrong-type fields propagated to downstream code with cryptic 500s.
+    // 使用前校验请求结构，避免非 JSON / 错误类型传入下游
     const body: unknown = await request.json().catch(() => null);
     if (!body || typeof body !== "object") {
       return Response.json({ error: "请求体格式错误" }, { status: 400 });
