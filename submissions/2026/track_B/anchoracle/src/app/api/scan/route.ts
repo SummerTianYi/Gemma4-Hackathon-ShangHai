@@ -2,6 +2,7 @@ import { cities, type Landmark, type SceneType } from "@/data/characters";
 import { landmarkData } from "@/data/landmarks";
 import { personas, GLOBAL_CONSTRAINTS } from "@/data/personas";
 import { getAI, isQuotaError, switchKey, consumeKeyWarning } from "@/lib/aiClient";
+import { LANDMARK_ALIASES } from "@/data/landmarkAliases";
 
 // 调试开关：默认关闭，仅在显式设置 DEBUG_API=true 时返回内部 _debug 数据
 const DEBUG_API = process.env.DEBUG_API === "true";
@@ -67,323 +68,6 @@ function buildLandmarkMap() {
 
 const landmarkMap = buildLandmarkMap();
 const landmarkNames = Object.keys(landmarkMap);
-
-const LANDMARK_ALIASES: Record<string, string> = {
-  // 杭州
-  西子湖: "西湖",
-  钱塘湖: "西湖",
-  雷峰塔: "西湖",
-  三潭印月: "西湖",
-  湖心亭: "西湖",
-  曲院风荷: "西湖",
-  花港观鱼: "西湖",
-  苏公堤: "苏堤",
-  六桥烟柳: "苏堤",
-  断桥: "白堤",
-  断桥残雪: "白堤",
-  西泠印社: "孤山",
-  放鹤亭: "孤山",
-  观潮: "钱塘江",
-  六和塔: "钱塘江",
-  浙大: "浙江大学",
-  求是园: "浙江大学",
-  玉泉校区: "浙江大学",
-
-  // 无锡
-  惠山祠堂: "惠山古镇",
-  惠山老街: "惠山古镇",
-  天下第二泉: "锡惠公园",
-  惠山泉: "锡惠公园",
-  龙光塔: "锡惠公园",
-  鼋头渚: "太湖",
-  东林: "东林书院",
-  风声雨声读书声: "东林书院",
-  马镇: "徐霞客故居",
-
-  // 南京
-  孙中山陵: "中山陵",
-  中山陵园: "中山陵",
-  博爱坊: "中山陵",
-  祭堂: "中山陵",
-  南京总统府: "总统府",
-  太平天国天王府: "总统府",
-  钟山: "紫金山",
-  明孝陵: "紫金山",
-  美龄宫: "紫金山",
-  织造府: "江宁织造博物馆",
-  江宁织造: "江宁织造博物馆",
-  王谢古居: "乌衣巷",
-  贡院: "夫子庙",
-  南京夫子庙: "夫子庙",
-  江南贡院: "夫子庙",
-  凤游寺: "凤凰台",
-  秦淮灯会: "秦淮河",
-  画舫: "秦淮河",
-
-  // 苏州
-  桃花庵: "桃花坞",
-  唐寅故居: "桃花坞",
-  虎丘: "虎丘山",
-  虎丘塔: "虎丘山",
-  虎丘斜塔: "虎丘山",
-  云岩寺塔: "虎丘山",
-  沧浪亭街: "沧浪亭",
-  沧浪之水: "沧浪亭",
-  范公祠: "天平山",
-  红枫: "天平山",
-  七里山塘: "山塘街",
-  枫桥: "寒山寺",
-  枫桥夜泊: "寒山寺",
-  水陆城门: "盘门",
-  盘门景区: "盘门",
-  四大名园: "拙政园",
-  苏州园林: "拙政园",
-
-  // 上海
-  山阴路: "鲁迅故居",
-  万国建筑群: "外滩",
-  黄浦江: "外滩",
-  外白渡桥: "外滩",
-  陆家嘴: "外滩",
-  东方明珠: "外滩",
-  三件套: "外滩",
-  上海中心: "外滩",
-  环球金融中心: "外滩",
-  金茂大厦: "外滩",
-  浦东天际线: "外滩",
-  光启公园: "徐光启纪念馆",
-  徐家汇教堂: "徐家汇天主教堂",
-  哥特式教堂: "徐家汇天主教堂",
-
-  // 北京
-  丹柿小院: "老舍故居",
-  舒庆春故居: "老舍故居",
-  裕泰茶馆: "老舍茶馆",
-  首都剧场: "北京人民艺术剧院",
-  北京人艺: "北京人民艺术剧院",
-  人艺: "北京人民艺术剧院",
-  梅兰芳故居: "梅兰芳纪念馆",
-  护国寺: "梅兰芳纪念馆",
-  阅微草堂: "纪晓岚故居",
-  琉璃厂: "琉璃厂古文化街",
-  紫禁城: "故宫",
-  文渊阁: "故宫",
-  太和殿: "故宫",
-  午门: "故宫",
-  天安门: "故宫",
-  角楼: "故宫",
-  昆明湖: "颐和园",
-  万寿山: "颐和园",
-  十七孔桥: "颐和园",
-  佛香阁: "颐和园",
-  长廊: "颐和园",
-
-  // 天津
-  李叔同故居: "李叔同故居纪念馆",
-  弘一法师: "李叔同故居纪念馆",
-  望海楼: "望海楼天主堂",
-  狮子林桥: "望海楼天主堂",
-  霍元甲故居: "霍元甲故居",
-  精武门: "霍元甲陵园",
-  精武体育会: "霍元甲陵园",
-  小南河村: "霍元甲故居",
-  天演论: "天演广场",
-  北洋水师学堂: "北洋水师学堂旧址",
-  北洋大学堂: "北洋大学堂旧址",
-  河北工业大学: "北洋大学堂旧址",
-  天津之眼: "海河",
-  摩天轮: "海河",
-  饮冰室: "梁启超饮冰室书斋",
-  梁启超故居: "梁启超饮冰室书斋",
-
-  // 重庆
-  秦良玉墓: "秦良玉陵园",
-  白杆兵: "万寿山",
-  秦良玉官寨: "万寿山",
-  万寿寨: "万寿山",
-  秦良玉兵寨: "万寿山",
-  长江三峡: "三峡",
-  瞿塘峡: "三峡",
-  巫峡: "三峡",
-  夔门: "三峡",
-  邹容路: "邹容公园",
-  革命军: "邹容烈士纪念碑",
-  朝天门码头: "朝天门",
-  两江交汇: "朝天门",
-  来福士: "朝天门",
-  卢作孚纪念馆: "卢作孚故居",
-  民生公司旧址: "卢作孚故居",
-  西部科学院: "重庆自然博物馆",
-  北碚公园卢作孚: "北碚公园",
-
-  // 武汉
-  行吟泽畔: "行吟阁",
-  屈原祠: "屈原纪念馆",
-  东湖: "东湖风景区",
-  磨山: "东湖风景区",
-  张之洞博物馆: "张之洞纪念馆",
-  武大: "武汉大学",
-  珞珈山: "武汉大学",
-  自强学堂: "武汉大学",
-  樱花大道: "武汉大学",
-  汉阳铁厂: "汉阳兵工厂",
-  汉阳造: "汉阳兵工厂",
-  黄鹤楼公园: "黄鹤楼",
-  蛇山之巅: "黄鹤楼",
-
-  // 成都
-  草堂: "杜甫草堂",
-  杜甫草堂博物馆: "杜甫草堂",
-  浣花溪: "浣花溪公园",
-  望江楼: "望江楼公园",
-  武侯祠: "成都武侯祠博物馆",
-  诸葛亮祠: "成都武侯祠博物馆",
-  刘备墓: "成都武侯祠博物馆",
-  惠陵: "成都武侯祠博物馆",
-  老南门大桥: "万里桥",
-  正通顺街: "巴金故居原址",
-  李公馆: "巴金故居原址",
-  高公馆: "巴金故居原址",
-  慧园: "百花潭公园·慧园",
-  百花潭: "百花潭公园·慧园",
-
-  // ── 人像别名：通过雕像识别景点 ──
-
-  // 杭州
-  苏轼像: "苏东坡纪念馆",
-  苏轼雕像: "苏东坡纪念馆",
-  苏轼铜像: "苏东坡纪念馆",
-  苏轼塑像: "苏东坡纪念馆",
-  苏东坡像: "苏东坡纪念馆",
-  苏东坡雕像: "苏东坡纪念馆",
-  苏东坡铜像: "苏东坡纪念馆",
-  竺可桢像: "竺可桢纪念馆",
-  竺可桢雕像: "竺可桢纪念馆",
-  竺可桢铜像: "竺可桢纪念馆",
-  白居易像: "白堤",
-  白居易雕像: "白堤",
-
-  // 无锡
-  徐霞客像: "徐霞客故居",
-  徐霞客雕像: "徐霞客故居",
-  徐霞客铜像: "徐霞客故居",
-  钱钟书像: "钱钟书故居",
-  钱钟书雕像: "钱钟书故居",
-  顾恺之像: "锡惠公园",
-  顾恺之雕像: "锡惠公园",
-
-  // 南京
-  孙中山像: "中山陵",
-  孙中山坐像: "中山陵",
-  孙中山铜像: "中山陵",
-  孙中山雕像: "中山陵",
-  孙中山塑像: "中山陵",
-  国父像: "中山陵",
-  孙文像: "中山陵",
-  李白像: "凤凰台",
-  李白雕像: "凤凰台",
-  李白铜像: "凤凰台",
-  曹雪芹像: "江宁织造博物馆",
-  曹雪芹雕像: "江宁织造博物馆",
-
-  // 苏州
-  唐伯虎像: "桃花坞",
-  唐伯虎雕像: "桃花坞",
-  唐伯虎铜像: "桃花坞",
-  范仲淹像: "天平山",
-  范仲淹雕像: "天平山",
-  范仲淹铜像: "天平山",
-  金圣叹像: "沧浪亭",
-  金圣叹雕像: "沧浪亭",
-
-  // 上海
-  鲁迅像: "鲁迅公园",
-  鲁迅铜像: "鲁迅公园",
-  鲁迅雕像: "鲁迅公园",
-  鲁迅塑像: "鲁迅公园",
-  鲁迅石像: "鲁迅公园",
-  鲁迅立像: "鲁迅公园",
-  宋庆龄像: "宋庆龄故居",
-  宋庆龄雕像: "宋庆龄故居",
-  宋庆龄铜像: "宋庆龄故居",
-  徐光启像: "徐光启纪念馆",
-  徐光启铜像: "徐光启纪念馆",
-  徐光启雕像: "徐光启纪念馆",
-  徐光启塑像: "徐光启纪念馆",
-
-  // 北京
-  梅兰芳像: "梅兰芳纪念馆",
-  梅兰芳铜像: "梅兰芳纪念馆",
-  梅兰芳雕像: "梅兰芳纪念馆",
-  纪晓岚像: "纪晓岚故居",
-  纪晓岚雕像: "纪晓岚故居",
-  老舍像: "老舍故居",
-  老舍雕像: "老舍故居",
-  老舍铜像: "老舍茶馆",
-
-  // 天津
-  严复像: "天演广场",
-  严复铜像: "天演广场",
-  严复雕像: "天演广场",
-  严复塑像: "天演广场",
-  霍元甲像: "霍元甲故居",
-  霍元甲铜像: "霍元甲故居",
-  霍元甲雕像: "霍元甲故居",
-  霍元甲塑像: "霍元甲陵园",
-  李叔同像: "李叔同故居纪念馆",
-  李叔同雕像: "李叔同故居纪念馆",
-  弘一法师像: "李叔同故居纪念馆",
-  弘一法师雕像: "李叔同故居纪念馆",
-
-  // 重庆
-  秦良玉像: "秦良玉陵园",
-  秦良玉铜像: "秦良玉陵园",
-  秦良玉雕像: "秦良玉陵园",
-  秦良玉塑像: "万寿山",
-  邹容像: "邹容公园",
-  邹容雕像: "邹容烈士纪念碑",
-  邹容铜像: "邹容公园",
-  邹容塑像: "邹容公园",
-  卢作孚像: "北碚公园",
-  卢作孚铜像: "北碚公园",
-  卢作孚雕像: "北碚公园",
-
-  // 武汉
-  屈原: "行吟阁",
-  屈原像: "行吟阁",
-  屈原铜像: "行吟阁",
-  屈原雕像: "行吟阁",
-  屈原塑像: "行吟阁",
-  屈原立像: "行吟阁",
-  屈原石像: "行吟阁",
-  屈原翘首: "行吟阁",
-  张之洞像: "张之洞纪念馆",
-  张之洞铜像: "张之洞纪念馆",
-  张之洞雕像: "张之洞纪念馆",
-  崔颢像: "黄鹤楼",
-  崔颢雕像: "黄鹤楼",
-
-  // 成都
-  杜甫像: "杜甫草堂",
-  杜甫铜像: "杜甫草堂",
-  杜甫雕像: "杜甫草堂",
-  杜甫石像: "杜甫草堂",
-  杜甫塑像: "杜甫草堂",
-  诸葛亮像: "成都武侯祠博物馆",
-  诸葛亮铜像: "成都武侯祠博物馆",
-  诸葛亮雕像: "成都武侯祠博物馆",
-  诸葛亮塑像: "成都武侯祠博物馆",
-  孔明像: "成都武侯祠博物馆",
-  孔明铜像: "成都武侯祠博物馆",
-  孔明雕像: "成都武侯祠博物馆",
-  武侯像: "成都武侯祠博物馆",
-  武侯铜像: "成都武侯祠博物馆",
-  刘备像: "成都武侯祠博物馆",
-  刘备铜像: "成都武侯祠博物馆",
-  刘备雕像: "成都武侯祠博物馆",
-  巴金像: "百花潭公园·慧园",
-  巴金雕像: "百花潭公园·慧园",
-};
 
 const CITY_FALLBACKS: { keywords: string[]; characterId: string }[] = [
   { keywords: ["杭州", "西湖", "钱塘"], characterId: "sushi" },
@@ -917,34 +601,82 @@ function buildSuggestions(city: CityOption | null): Array<{ landmark: string; ch
   return result;
 }
 
+type ScanRequest = {
+  imageBase64: string;
+  imageMimeType: string;
+  cityId?: string;
+  forcedLandmark?: string;
+};
+
+// 校验 /api/scan 请求体；通过则返回 data，否则返回对应的错误响应
+async function parseScanRequest(
+  request: Request,
+): Promise<{ ok: true; data: ScanRequest } | { ok: false; response: Response }> {
+  const body: unknown = await request.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return { ok: false, response: Response.json({ error: "请求体格式错误" }, { status: 400 }) };
+  }
+  const { imageBase64, imageMimeType, cityId, forcedLandmark } = body as {
+    imageBase64?: unknown;
+    imageMimeType?: unknown;
+    cityId?: unknown;
+    forcedLandmark?: unknown;
+  };
+  if (typeof imageBase64 !== "string" || typeof imageMimeType !== "string") {
+    return { ok: false, response: Response.json({ error: "缺少图片" }, { status: 400 }) };
+  }
+  if (cityId !== undefined && typeof cityId !== "string") {
+    return { ok: false, response: Response.json({ error: "城市字段格式错误" }, { status: 400 }) };
+  }
+  if (forcedLandmark !== undefined && typeof forcedLandmark !== "string") {
+    return { ok: false, response: Response.json({ error: "景点字段格式错误" }, { status: 400 }) };
+  }
+  if (!["image/jpeg", "image/png", "image/webp"].includes(imageMimeType)) {
+    return { ok: false, response: Response.json({ error: "暂不支持该图片格式" }, { status: 400 }) };
+  }
+  if (imageBase64.length > IMAGE_BASE64_LIMIT) {
+    return { ok: false, response: Response.json({ error: "图片过大，请压缩后重试" }, { status: 413 }) };
+  }
+  return { ok: true, data: { imageBase64, imageMimeType, cityId, forcedLandmark } };
+}
+
+// 以指定人物口吻调用 Gemma 26B 生成讲述；失败时回退到默认文案
+async function narrateWithPersona(
+  characterId: string,
+  prompt: string,
+  opts: { fallbackText: string; timeoutLabel: string; logTag: string },
+): Promise<{ narration: string; error: string | null }> {
+  const persona = personas[characterId];
+  let narration = opts.fallbackText;
+  let error: string | null = null;
+  try {
+    const res = await withTimeout(
+      getAI().models.generateContent({
+        model: "gemma-4-26b-a4b-it",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: {
+          systemInstruction: persona + "\n" + GLOBAL_CONSTRAINTS,
+          temperature: 1.0,
+          maxOutputTokens: 500,
+        },
+      }),
+      GEMMA_NARRATE_TIMEOUT,
+      opts.timeoutLabel,
+    );
+    narration = res.text || narration;
+  } catch (err) {
+    error = errorMessage(err);
+    console.error(opts.logTag, error);
+    if (isQuotaError(err)) switchKey();
+  }
+  return { narration, error };
+}
+
 export async function POST(request: Request) {
   try {
-    // 使用前校验请求结构，避免非 JSON / 错误类型传入下游
-    const body: unknown = await request.json().catch(() => null);
-    if (!body || typeof body !== "object") {
-      return Response.json({ error: "请求体格式错误" }, { status: 400 });
-    }
-    const { imageBase64, imageMimeType, cityId, forcedLandmark } = body as {
-      imageBase64?: unknown;
-      imageMimeType?: unknown;
-      cityId?: unknown;
-      forcedLandmark?: unknown;
-    };
-    if (typeof imageBase64 !== "string" || typeof imageMimeType !== "string") {
-      return Response.json({ error: "缺少图片" }, { status: 400 });
-    }
-    if (cityId !== undefined && typeof cityId !== "string") {
-      return Response.json({ error: "城市字段格式错误" }, { status: 400 });
-    }
-    if (forcedLandmark !== undefined && typeof forcedLandmark !== "string") {
-      return Response.json({ error: "景点字段格式错误" }, { status: 400 });
-    }
-    if (!["image/jpeg", "image/png", "image/webp"].includes(imageMimeType)) {
-      return Response.json({ error: "暂不支持该图片格式" }, { status: 400 });
-    }
-    if (imageBase64.length > IMAGE_BASE64_LIMIT) {
-      return Response.json({ error: "图片过大，请压缩后重试" }, { status: 413 });
-    }
+    const parsed = await parseScanRequest(request);
+    if (!parsed.ok) return parsed.response;
+    const { imageBase64, imageMimeType, cityId, forcedLandmark } = parsed.data;
 
     console.log(`[Scan] Received: base64Length=${imageBase64.length}, mimeType=${imageMimeType}, cityId=${cityId || "auto"}`);
 
@@ -954,7 +686,6 @@ export async function POST(request: Request) {
     // ── 用户手动指定景点：跳过视觉识别直接讲述 ──
     if (forcedLandmark && landmarkMap[forcedLandmark]) {
       const info = landmarkMap[forcedLandmark];
-      const persona = personas[info.characterId];
       const angle = pickRandom(ANGLES);
 
       const narratePrompt = `用户站在【${forcedLandmark}】前。${angle}。用 150-220 字讲述你与此地的渊源。
@@ -964,23 +695,11 @@ export async function POST(request: Request) {
 - 结合你的生活时代、经历、学识或作品，让景点与历史背景发生联系。
 - 纯文本输出，不使用 Markdown。`;
 
-      let narration = "这个地方承载着我许多的记忆。";
-      try {
-        // 讲述有默认兜底，单次尝试即可，不重试（节省时间预算）
-        const narrateRes = await withTimeout(
-          getAI().models.generateContent({
-            model: "gemma-4-26b-a4b-it",
-            contents: [{ role: "user", parts: [{ text: narratePrompt }] }],
-            config: { systemInstruction: persona + "\n" + GLOBAL_CONSTRAINTS, temperature: 1.0, maxOutputTokens: 500 },
-          }),
-          GEMMA_NARRATE_TIMEOUT,
-          "gemma_narrate_timeout"
-        );
-        narration = narrateRes.text || narration;
-      } catch (error) {
-        console.error("[Scan] Forced landmark narrate error:", errorMessage(error));
-        if (isQuotaError(error)) switchKey();
-      }
+      const { narration } = await narrateWithPersona(info.characterId, narratePrompt, {
+        fallbackText: "这个地方承载着我许多的记忆。",
+        timeoutLabel: "gemma_narrate_timeout",
+        logTag: "[Scan] Forced landmark narrate error:",
+      });
 
       return jsonWithDebug(
         { found: true, landmark: forcedLandmark, characterId: info.characterId, characterName: info.characterName, cityName: info.cityName, avatar: info.avatar, narration, identifiedBy: "forced" },
@@ -1024,7 +743,6 @@ export async function POST(request: Request) {
     // ── Step 3: Gemma 31B 讲述 ──
     if (matched && landmarkMap[matched]) {
       const info = landmarkMap[matched];
-      const persona = personas[info.characterId];
       const angle = pickRandom(ANGLES);
 
       const uncertaintyHint = confidence === "medium"
@@ -1044,28 +762,11 @@ ${angle}。用 150-220 字讲述你与此地的渊源。
 - 结合你的生活时代、经历、学识或作品，让现代景点与历史背景发生联系。
 - 纯文本输出，不使用 Markdown。${uncertaintyHint}`;
 
-      let narration = "这个地方承载着我许多的记忆。";
-      let narrateError: string | null = null;
-      try {
-        const narrateRes = await withTimeout(
-          getAI().models.generateContent({
-            model: "gemma-4-26b-a4b-it",
-            contents: [{ role: "user", parts: [{ text: narratePrompt }] }],
-            config: {
-              systemInstruction: persona + "\n" + GLOBAL_CONSTRAINTS,
-              temperature: 1.0,
-              maxOutputTokens: 500,
-            },
-          }),
-          GEMMA_NARRATE_TIMEOUT,
-          "gemma_narrate_timeout"
-        );
-        narration = narrateRes.text || narration;
-      } catch (error) {
-        narrateError = errorMessage(error);
-        console.error("[Scan] Gemma narrate error:", narrateError);
-        if (isQuotaError(error)) switchKey();
-      }
+      const { narration, error: narrateError } = await narrateWithPersona(info.characterId, narratePrompt, {
+        fallbackText: "这个地方承载着我许多的记忆。",
+        timeoutLabel: "gemma_narrate_timeout",
+        logTag: "[Scan] Gemma narrate error:",
+      });
 
       return jsonWithDebug(
         {
@@ -1094,7 +795,6 @@ ${angle}。用 150-220 字讲述你与此地的渊源。
       );
     }
 
-    const persona = personas[fallbackCharId];
     const { character, cityName } = charInfo;
 
     const fallbackPrompt = `用户展示了一张照片，你观察到以下画面：
@@ -1102,28 +802,11 @@ ${visualDescription}
 
 虽然这张照片未能精确匹配到项目内景点，但请基于你看到的画面内容，以你的历史人物口吻发表感想。用 150-220 字回应，体现你的时代背景、学识和性格。纯文本输出，不使用 Markdown。`;
 
-    let narration = "此景虽不在我熟知之列，但亦有几分意趣。";
-    let narrateError: string | null = null;
-    try {
-      const fallbackRes = await withTimeout(
-        getAI().models.generateContent({
-          model: "gemma-4-26b-a4b-it",
-          contents: [{ role: "user", parts: [{ text: fallbackPrompt }] }],
-          config: {
-            systemInstruction: persona + "\n" + GLOBAL_CONSTRAINTS,
-            temperature: 1.0,
-            maxOutputTokens: 500,
-          },
-        }),
-        GEMMA_NARRATE_TIMEOUT,
-        "gemma_scan_fallback_timeout"
-      );
-      narration = fallbackRes.text || narration;
-    } catch (error) {
-      narrateError = errorMessage(error);
-      console.error("[Scan] Gemma fallback error:", narrateError);
-      if (isQuotaError(error)) switchKey();
-    }
+    const { narration, error: narrateError } = await narrateWithPersona(fallbackCharId, fallbackPrompt, {
+      fallbackText: "此景虽不在我熟知之列，但亦有几分意趣。",
+      timeoutLabel: "gemma_scan_fallback_timeout",
+      logTag: "[Scan] Gemma fallback error:",
+    });
 
     return jsonWithDebug(
       {

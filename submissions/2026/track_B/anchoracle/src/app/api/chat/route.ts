@@ -428,36 +428,50 @@ const LENGTH_CONFIG = {
 // Next.js App Router: 提高 Vercel 函数超时上限
 export const maxDuration = 60;
 
+type ChatRequest = {
+  characterId: string;
+  messages: { role: string; content: string }[];
+  imageBase64?: string;
+  imageMimeType?: string;
+  lengthMode?: unknown;
+};
+
+// 校验 /api/chat 请求体；通过则返回 data，否则返回对应的错误响应
+async function parseChatRequest(
+  request: Request,
+): Promise<{ ok: true; data: ChatRequest } | { ok: false; response: Response }> {
+  const body: unknown = await request.json().catch(() => null);
+  if (!body || typeof body !== "object") {
+    return { ok: false, response: Response.json({ error: "请求体格式错误" }, { status: 400 }) };
+  }
+  const { characterId, messages, imageBase64, imageMimeType, lengthMode } = body as {
+    characterId?: unknown;
+    messages?: unknown;
+    imageBase64?: unknown;
+    imageMimeType?: unknown;
+    lengthMode?: unknown;
+  };
+  if (typeof characterId !== "string" || !Array.isArray(messages)) {
+    return { ok: false, response: Response.json({ error: "缺少必要参数" }, { status: 400 }) };
+  }
+  // 防御性限制：拒绝超长历史，避免异常 payload 拖垮内存/CPU（下游仍会截断到 20 条）
+  if (messages.length > 500) {
+    return { ok: false, response: Response.json({ error: "消息历史过长" }, { status: 413 }) };
+  }
+  if (imageBase64 !== undefined && typeof imageBase64 !== "string") {
+    return { ok: false, response: Response.json({ error: "图片字段格式错误" }, { status: 400 }) };
+  }
+  if (imageMimeType !== undefined && typeof imageMimeType !== "string") {
+    return { ok: false, response: Response.json({ error: "图片类型字段格式错误" }, { status: 400 }) };
+  }
+  return { ok: true, data: { characterId, messages, imageBase64, imageMimeType, lengthMode } };
+}
+
 export async function POST(request: Request) {
   try {
-    // 解构前校验请求结构，避免畸形请求体（非 JSON / 错误类型）传入下游
-    const body: unknown = await request.json().catch(() => null);
-    if (!body || typeof body !== "object") {
-      return Response.json({ error: "请求体格式错误" }, { status: 400 });
-    }
-    const { characterId, messages, imageBase64, imageMimeType, lengthMode } =
-      body as {
-        characterId?: unknown;
-        messages?: unknown;
-        imageBase64?: unknown;
-        imageMimeType?: unknown;
-        lengthMode?: unknown;
-      };
-    if (typeof characterId !== "string" || !Array.isArray(messages)) {
-      return Response.json({ error: "缺少必要参数" }, { status: 400 });
-    }
-    // Defense-in-depth: cap incoming history length to bound memory/CPU
-    // (server-side trim to 20 happens below, but we want to reject pathological
-    // payloads before they hit JSON parsing path).
-    if (messages.length > 500) {
-      return Response.json({ error: "消息历史过长" }, { status: 413 });
-    }
-    if (imageBase64 !== undefined && typeof imageBase64 !== "string") {
-      return Response.json({ error: "图片字段格式错误" }, { status: 400 });
-    }
-    if (imageMimeType !== undefined && typeof imageMimeType !== "string") {
-      return Response.json({ error: "图片类型字段格式错误" }, { status: 400 });
-    }
+    const parsed = await parseChatRequest(request);
+    if (!parsed.ok) return parsed.response;
+    const { characterId, messages, imageBase64, imageMimeType, lengthMode } = parsed.data;
     const lengthCfg = LENGTH_CONFIG[(lengthMode as keyof typeof LENGTH_CONFIG) || "standard"];
 
     // ── 消息截断：只发送最近 20 条给模型 ──
