@@ -12,7 +12,7 @@
 
 本项目为 **Gemma 4 开发者大赛 2026 · 赛道 B (Multimodal)** 参赛作品。
 
-🌐 在线体验：<https://travel-history-agent.vercel.app>
+在线体验：<https://travel-history-agent.vercel.app>
 
 ### 🔍 核心代码导览（评委直达）
 
@@ -20,10 +20,10 @@
 
 | 模块 | 文件 | 作用 |
 |------|------|------|
-| 🧠 多模态识别 + 加权评分 | [`src/app/api/scan/route.ts`](./src/app/api/scan/route.ts) | Gemma 4 31B 单次推理完成 OCR / 场景 / 主体 / 30 选 1 人物识别，后端加权评分锁定景点 |
-| 💬 历史人物流式对话 | [`src/app/api/chat/route.ts`](./src/app/api/chat/route.ts) | Gemma 4 26B A4B 以人物口吻流式讲述，含 Gemini 搜索兜底 |
-| 🔌 模型客户端 | [`src/lib/aiClient.ts`](./src/lib/aiClient.ts) | Gemma / Gemini SDK 单例（API Key 唯一读取处） |
-| 🗂️ 内容数据 | [`src/data/`](./src/data) | 30 人物 / 90 景点 / 人设 / 别名，全部数据驱动 |
+| 多模态识别 + 加权评分 | [`src/app/api/scan/route.ts`](./src/app/api/scan/route.ts) | Gemma 4 31B 单次推理完成 OCR / 场景 / 主体 / 30 选 1 人物识别，后端加权评分锁定景点 |
+| 历史人物流式对话 | [`src/app/api/chat/route.ts`](./src/app/api/chat/route.ts) | Gemma 4 26B A4B 以人物口吻流式讲述，含 Gemini 搜索兜底 |
+| 模型客户端 | [`src/lib/aiClient.ts`](./src/lib/aiClient.ts) | Gemma / Gemini SDK 单例（API Key 唯一读取处） |
+| 内容数据 | [`src/data/`](./src/data) | 30 人物 / 90 景点 / 人设 / 别名，全部数据驱动 |
 
 ---
 
@@ -63,16 +63,16 @@ Gemma 4 26B A4B 以该人物口吻流式讲述景点历史
 
 ---
 
-## 🎯 模型选择：按任务匹配不同的 Gemma 4
+## 🎯 模型分工：两个 Gemma 4 变体各司其职
 
-同属 Gemma 4 家族，但视觉与对话两条链路对模型的诉求完全不同，我们为各自选用了最合适的变体：
+视觉识别要"一次看准"，历史人物对话要"持续、低延迟地表达"——两类负载诉求不同，我们用 Gemma 4 家族的两个变体分别承担：
 
-| 任务环节 | 选用变体 | 为什么是它 |
-|----------|----------|--------------------------|
-| 视觉识别（OCR + 场景分类 + 主体识别 + 人物识别） | **Gemma 4 31B IT（Dense）** | Dense 架构精度更高，配合 256K 长上下文与原生多模态，可在**单次推理**里并行产出四项结构化结果，省去多轮调用与中间解析 |
-| 历史人物角色扮演对话 | **Gemma 4 26B A4B IT（MoE）** | MoE 每次仅激活 4B 参数，**流式首字延迟低、吞吐高**，更契合 30 位人物长文本、高并发的实时对话 |
+| 任务环节 | 选用变体 | 契合点 |
+|----------|----------|--------|
+| 视觉识别（OCR + 场景 + 主体 + 人物识别） | **Gemma 4 31B IT（Dense）** | 全参数激活在细粒度多模态判别上更稳；256K 长上下文支持**单次推理**并行产出四项结构化结果 |
+| 历史人物角色扮演对话 | **Gemma 4 26B A4B IT（MoE）** | 每次仅激活约 4B 参数，**流式首字延迟低、吞吐高**，契合 30 位人物的实时流式对话 |
 
-> 一句话：**重精度的视觉用 Dense，重响应速度的对话用 MoE**——同一家族内做按需取舍。详细推理见 [TECHNICAL_REPORT.md](./TECHNICAL_REPORT.md)。
+> 重判别的视觉用 31B Dense，重表达的对话用 26B A4B MoE——同一家族内按负载取舍。详见 [TECHNICAL_REPORT.md](./TECHNICAL_REPORT.md)。
 
 ---
 
@@ -139,7 +139,7 @@ docker run -p 3000:3000 --env-file .env.local anchoracle
 
 | 变量 | 必填 | 说明 |
 |------|------|------|
-| `GOOGLE_API_KEY` | ✅ | Google AI Studio API Key，[点此申请](https://aistudio.google.com/apikey) |
+| `GOOGLE_API_KEY` | 是 | Google AI Studio API Key，[点此申请](https://aistudio.google.com/apikey) |
 
 > 中国大陆网络下，本地运行如需代理可额外设置 `HTTPS_PROXY`（详见下方「评测须知」第 1 条）。Free tier 配额耗尽时，换用更高 Tier 的 key 即可。
 
@@ -162,7 +162,7 @@ const API_KEY = process.env.GOOGLE_API_KEY!;
 
   key 申请：<https://aistudio.google.com/apikey>，改完重启 `npm run dev` 即生效。
 
-> ℹ️ **两套环境互不影响**：`.env.local` 已被 `.gitignore`，只作用于你本机的 `npm run dev`；线上 demo 的 key 单独配置在作者的 Vercel 后台。你在本地换 key 只影响你自己的机器，**不会**改动也不会读取作者的线上部署。
+> **两套环境互不影响**：`.env.local` 已被 `.gitignore`，只作用于你本机的 `npm run dev`；线上 demo 的 key 单独配置在作者的 Vercel 后台。你在本地换 key 只影响你自己的机器，**不会**改动也不会读取作者的线上部署。
 
 ---
 
