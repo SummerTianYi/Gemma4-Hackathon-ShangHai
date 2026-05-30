@@ -14,6 +14,17 @@
 
 🌐 在线体验：<https://travel-history-agent.vercel.app>
 
+### 🔍 核心代码导览（评委直达）
+
+> 项目基于 Next.js App Router，API 文件按框架约定统一命名为 `route.ts`；Gemma 4 的核心调用集中在以下文件：
+
+| 模块 | 文件 | 作用 |
+|------|------|------|
+| 🧠 多模态识别 + 加权评分 | [`src/app/api/scan/route.ts`](./src/app/api/scan/route.ts) | Gemma 4 31B 单次推理完成 OCR / 场景 / 主体 / 30 选 1 人物识别，后端加权评分锁定景点 |
+| 💬 历史人物流式对话 | [`src/app/api/chat/route.ts`](./src/app/api/chat/route.ts) | Gemma 4 26B A4B 以人物口吻流式讲述，含 Gemini 搜索兜底 |
+| 🔌 模型客户端 | [`src/lib/aiClient.ts`](./src/lib/aiClient.ts) | Gemma / Gemini SDK 单例（API Key 唯一读取处） |
+| 🗂️ 内容数据 | [`src/data/`](./src/data) | 30 人物 / 90 景点 / 人设 / 别名，全部数据驱动 |
+
 ---
 
 ## ✨ 核心能力（多模态全链路）
